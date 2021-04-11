@@ -32,9 +32,13 @@ class CodeforcesScraper:
         soup = BeautifulSoup(page, "html.parser")
         code = soup.find(id=self.src_code_div_id)
 
+        table = soup.find("table")
+        rows = table.find_all("tr")
+        problemName = rows[1].find_all("td")[2].find("a").text
+
         # split the lines, they already has \r so writing the lines will create lines
         code_chunks = code.text.split("\n")
-        return code_chunks
+        return problemName, code_chunks
 
     # comparison can be either "time" or "memory"
     # by default it is time.
@@ -83,5 +87,5 @@ class CodeforcesScraper:
                 print(keys)
 
 
-cf = CodeforcesScraper("Fuad113", 4)
-cf.get_all_accepted_sol()
+# cf = CodeforcesScraper("Fuad113", 4)
+# cf.get_all_accepted_sol()
