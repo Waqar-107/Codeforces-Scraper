@@ -5,8 +5,13 @@ from util import *
 
 
 class CodeInfo:
-    def __init__(self, submissionID, verdict, time, memory, name, code, language):
-        pass
+    def __init__(self, submissionID, verdict, time, memory, name, language):
+        self.submissionID = submissionID
+        self.verdict = verdict
+        self.time = time
+        self.memory = memory
+        self.name = name
+        self.language = language
 
 
 class CodeforcesScraper:
@@ -22,10 +27,10 @@ class CodeforcesScraper:
         return page
 
     @staticmethod
-    def fetch_code(url):
+    def fetch_code(self, url):
         page = urlopen(url)
         soup = BeautifulSoup(page, "html.parser")
-        code = soup.find(id="program-source-text")
+        code = soup.find(id=self.src_code_div_id)
 
         # split the lines, they already has \r so writing the lines will create lines
         code_chunks = code.text.split("\n")
@@ -39,14 +44,16 @@ class CodeforcesScraper:
             page = self.fetch_data(self.base_url + "/submissions/" + self.user_Name + "/page/" + str(i))
             soup = BeautifulSoup(page, "html.parser")
             table = soup.find_all("table")
-            rows = table.find_all("tr")
+            rows = table[0].find_all("tr")
 
             accepted_codes = {}
 
-            for row in rows:
-                column = row.find_all("td")
+            for i in range(1, len(rows)):
+                column = rows[i].find_all("td")
 
                 submissionLink = column[0].find("a")["href"]
+                submissionId = submissionLink.split("/")[-1]
+
                 problemName = column[3].find("a").text.strip()
                 language = column[4].text.strip()
                 verdict = column[5].text.strip()
@@ -58,4 +65,23 @@ class CodeforcesScraper:
                 memory = int(column[7].text.strip().split("\xa0")[0])
 
                 if re.match(verdictList["ac"], verdict):
-                    pass
+                    if problemName not in accepted_codes:
+                        accepted_codes[problemName] = CodeInfo(submissionId, verdict, time, memory, problemName,
+                                                               language)
+
+                    else:
+                        if comparison == "time":
+                            if accepted_codes[problemName].time > time:
+                                accepted_codes[problemName] = CodeInfo(submissionId, verdict, time, memory, problemName,
+                                                                       language)
+                        else:
+                            if accepted_codes[problemName].memory > memory:
+                                accepted_codes[problemName] = CodeInfo(submissionId, verdict, time, memory, problemName,
+                                                                       language)
+
+            for keys in accepted_codes:
+                print(keys)
+
+
+cf = CodeforcesScraper("Fuad113", 4)
+cf.get_all_accepted_sol()
