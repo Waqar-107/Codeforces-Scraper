@@ -7,3 +7,4 @@ verdictList = {
     "compilation_error": "^Compilation error.*$",
     "hacked": "^Hacked$"
 }
+
