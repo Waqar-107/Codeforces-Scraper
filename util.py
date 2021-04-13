@@ -8,3 +8,9 @@ verdictList = {
     "hacked": "^Hacked$"
 }
 
+language_extensions = {
+    "cpp": ["GNU C++"],
+    "c": ["GNU C"],
+    "py": ["PyPy", "Python"],
+    "java": ["Java"],
+}

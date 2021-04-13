@@ -2,6 +2,8 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import re
 from util import *
+import os
+import shutil
 
 
 class CodeInfo:
@@ -18,18 +20,17 @@ class CodeInfo:
 
 
 class CodeforcesScraper:
-    def __init__(self, user_name, page_required):
+    def __init__(self, user_name: str) -> None:
         self.user_Name = user_name
-        self.page_required = page_required
         self.base_url = "http://codeforces.com"
         self.src_code_div_id = "program-source-text"
 
     @staticmethod
-    def fetch_data(url):
+    def fetch_data(url: str) -> object:
         page = urlopen(url)
         return page
 
-    def fetch_code(self, url):
+    def fetch_code(self, url: str) -> str:
         page = urlopen(url)
         soup = BeautifulSoup(page, "html.parser")
         code = soup.find(id=self.src_code_div_id)
@@ -41,10 +42,20 @@ class CodeforcesScraper:
     # comparison can be either "time" or "memory"
     # by default it is time.
     # if there are more than one accepted solution for any problem, we'll take the efficient one
-    def get_all_accepted_sol(self, comparison="time"):
-        for i in range(1, self.page_required + 1):
-            page = self.fetch_data(self.base_url + "/submissions/" + self.user_Name + "/page/" + str(i))
+    def get_all_accepted_sol(self, page_required: int, root_directory_name: str, comparison: str = "time") -> None:
+        # remove the root directory where the codes will be stored
+        if os.path.exists(root_directory_name):
+            # delete folder with things inside it
+            shutil.rmtree(root_directory_name)
+
+        for p in range(1, page_required + 1):
+            page = self.fetch_data(self.base_url + "/submissions/" + self.user_Name + "/page/" + str(p))
             soup = BeautifulSoup(page, "html.parser")
+
+            # that page is non-existent so they return the home page
+            if soup.title.string == "Codeforces":
+                continue
+
             table = soup.find_all("table")
             rows = table[0].find_all("tr")
 
@@ -109,8 +120,42 @@ class CodeforcesScraper:
                 url = self.base_url + "/contest/" + accepted_codes[key].contest_id + "/submission/" + accepted_codes[
                     key].submission_id
                 accepted_codes[key].code = self.fetch_code(url)
+                self.save_code(accepted_codes[key], root_directory_name)
+
+            print("page", p, "done")
+
+    @staticmethod
+    def save_code(code_info: CodeInfo, root_directory_name: str) -> None:
+        # check if the root directory exists
+        if not os.path.exists(root_directory_name):
+            os.mkdir(root_directory_name)
+
+        # check if A, B, C etc folder exists
+        if not os.path.exists(root_directory_name + "/" + code_info.level):
+            os.mkdir(root_directory_name + "/" + code_info.level)
+
+        # file name will be `contest_id.level problem_name`
+        # change according to your need
+        file_name = code_info.contest_id + code_info.level + ". " + code_info.name
+        file_path = root_directory_name + "/" + code_info.level + "/"
+
+        ext_found = False
+        for ext in language_extensions:
+            for lang in language_extensions[ext]:
+                if lang.lower() in code_info.language.lower():
+                    file_name += "." + ext
+                    ext_found = True
+                    break
+
+            if ext_found:
+                break
+
+        if not ext_found:
+            file_name += ".txt"
+
+        file = open(file_path + file_name, "w")
+        file.writelines(code_info.code)
 
 
-
-cf = CodeforcesScraper("_lucifer_", 1)
-cf.get_all_accepted_sol()
+cf = CodeforcesScraper("_lucifer_")
+cf.get_all_accepted_sol(1, "lucifers_ac_code")
