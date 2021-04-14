@@ -31,3 +31,5 @@ cf.get_all_accepted_sol(total_page_of_submission, root_directory_name_to_save_co
 # Future Works
 1. Save all the accepted submissions for a particular problem.
 2. Write functions to retrieve `wrong answer`, `time limit exceeded`, `runtime error` etc. 
+
+`In case of any bug found please create an issue` 🙂
